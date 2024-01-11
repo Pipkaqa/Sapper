@@ -24,9 +24,6 @@ const int OFFSET_Y = 1;
 const int MILLISECONDS_PAUSE = 500;
 const int MAP_SIZE = 20;
 
-const int dRow[] = { -1, 0, 1, 0 };
-const int dCol[] = { 0, 1, 0, -1 };
-
 int total_mines_count;
 
 int mines_remain;
@@ -574,6 +571,8 @@ void finish_game(std::string message)
 
 	update_exit_signal.set_value();
 	timer_exit_signal.set_value();
+
+	system("pause>null");
 }
 
 void gotoxy(int x, int y)
