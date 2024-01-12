@@ -392,9 +392,9 @@ bool try_open_cell(int x, int y)
 	}
 	else if (time_str == "00:00")
 	{
-		try_secure_cells_around(std::make_pair(x, y));
-
 		timer_thread = std::thread(&timer_tick, std::move(timer_exit_signal.get_future()));
+
+		try_secure_cells_around(std::make_pair(x, y));
 	}
 	else if (!map[x][y]->visible)
 	{
@@ -406,11 +406,13 @@ bool try_open_cell(int x, int y)
 
 void try_secure_cells_around(std::pair<int, int> start_pos)
 {
-	if (!map[start_pos.first][start_pos.second]->visible)
+	auto start_cell = map[start_pos.second][start_pos.first];
+
+	if (!start_cell->visible)
 	{
-		if (map[start_pos.first][start_pos.second]->check_mines_around(map) != 0)
+		if (start_cell->check_mines_around(map) != 0)
 		{
-			map[start_pos.first][start_pos.second]->visible = true;
+			start_cell->visible = true;
 			return;
 		}
 	}
@@ -424,6 +426,7 @@ void try_secure_cells_around(std::pair<int, int> start_pos)
 
 	std::queue<std::pair<int, int>> queue;
 
+	visited[start_pos.second][start_pos.first] = true;
 	queue.push(std::make_pair(start_pos.first, start_pos.second));
 
 	while (!queue.empty())
@@ -431,24 +434,24 @@ void try_secure_cells_around(std::pair<int, int> start_pos)
 		std::pair<int, int> cell = queue.front();
 
 		queue.pop();
-		visited[cell.first][cell.second] = true;
 
 		for (int y = cell.second - 1; y < cell.second + 2; y++)
 		{
 			for (int x = cell.first - 1; x < cell.first + 2; x++)
 			{
-				if (map[x][y]->type != MINE)
+				if (map[y][x]->type != MINE)
 				{
-					map[x][y]->visible = true;
+					map[y][x]->visible = true;
 				}
 
-				if (!visited[x][y] && map[x][y]->type != WALL && map[x][y]->check_mines_around(map) == 0)
+				if (!visited[y][x] && map[y][x]->type != WALL && map[y][x]->check_mines_around(map) == 0)
 				{
+					visited[y][x] = true;
 					queue.push(std::make_pair(x, y));
 
-					if (map[x][y]->flagged)
+					if (map[y][x]->flagged)
 					{
-						map[x][y]->flagged = false;
+						map[y][x]->flagged = false;
 						check_cells_flagged_status();
 					}
 				}
@@ -572,7 +575,9 @@ void finish_game(std::string message)
 	update_exit_signal.set_value();
 	timer_exit_signal.set_value();
 
-	system("pause>null");
+	std::cout << "\n";
+
+	system("pause");
 }
 
 void gotoxy(int x, int y)
